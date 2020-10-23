@@ -54,7 +54,6 @@ class FollowList(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         username = self.request.data.get('following')
-<<<<<<< HEAD
         try:
             following = User.objects.get(username=username)
         except:
@@ -63,11 +62,4 @@ class FollowList(generics.ListCreateAPIView):
             user=self.request.user, following=following
         ).exists():
             raise serializers.ValidationError("This follow already exists")
-=======
-        # не понял как это сделать красиво..
-        if not User.objects.filter(username=username).exists() or \
-           Follow.objects.filter(user=self.request.user, following__username=username).exists():
-            raise serializers.ValidationError("This user doesn't exists")
-        following = User.objects.get(username=username)
->>>>>>> 0308ada6b55b2e8f34ba43f40b582c95901cfe7c
         serializer.save(user=self.request.user, following=following)
