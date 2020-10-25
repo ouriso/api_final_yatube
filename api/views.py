@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
-from rest_framework import generics, viewsets, serializers
+from rest_framework import mixins, viewsets
 
 from rest_framework.filters import SearchFilter
 
@@ -41,25 +41,20 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, post=post)
 
 
-class GroupList(generics.ListCreateAPIView):
+class GroupViewSet(mixins.ListModelMixin,
+                   mixins.CreateModelMixin,
+                   viewsets.GenericViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
 
 
-class FollowList(generics.ListCreateAPIView):
+class FollowViewSet(mixins.ListModelMixin,
+                    mixins.CreateModelMixin,
+                    viewsets.GenericViewSet):
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     filter_backends = [SearchFilter]
     search_fields = ['=user__username', '=following__username']
 
     def perform_create(self, serializer):
-        username = self.request.data.get('following')
-        try:
-            following = User.objects.get(username=username)
-        except:
-            raise serializers.ValidationError("This user doesn't exists")
-        if Follow.objects.filter(
-            user=self.request.user, following=following
-        ).exists():
-            raise serializers.ValidationError("This follow already exists")
-        serializer.save(user=self.request.user, following=following)
+        serializer.save(user=self.request.user)

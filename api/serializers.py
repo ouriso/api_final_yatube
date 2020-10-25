@@ -38,8 +38,20 @@ class GroupSerializer(serializers.ModelSerializer):
 class FollowSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(slug_field='username', read_only=True)
     following = serializers.SlugRelatedField(
-        slug_field='username', read_only=True
+        queryset=User.objects.all(), slug_field='username'
     )
+
+    def validate(self, data):
+        follower = self.context['request'].user
+        following = data['following']
+        is_follow = Follow.objects.filter(
+            user=follower, following=following
+        ).exists()
+        if follower == following:
+            raise serializers.ValidationError("You can't follow yourself")
+        if is_follow:
+            raise serializers.ValidationError("This follow already exists")
+        return data
 
     class Meta:
         model = Follow
