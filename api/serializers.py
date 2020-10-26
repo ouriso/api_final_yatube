@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from .models import Comment, Follow, Group, Post
 
@@ -36,7 +37,10 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    user = serializers.SlugRelatedField(
+        slug_field='username', read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
     following = serializers.SlugRelatedField(
         queryset=User.objects.all(), slug_field='username'
     )
@@ -44,15 +48,17 @@ class FollowSerializer(serializers.ModelSerializer):
     def validate(self, data):
         follower = self.context['request'].user
         following = data['following']
-        is_follow = Follow.objects.filter(
-            user=follower, following=following
-        ).exists()
         if follower == following:
             raise serializers.ValidationError("You can't follow yourself")
-        if is_follow:
-            raise serializers.ValidationError("This follow already exists")
         return data
 
     class Meta:
         model = Follow
         fields = ('user', 'following')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=['user', 'following'],
+                message="This follow already exists"
+            )
+        ]
