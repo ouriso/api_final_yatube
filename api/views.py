@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, permissions, viewsets
 
 from rest_framework.filters import SearchFilter
 
@@ -18,7 +18,8 @@ User = get_user_model()
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = (IsAuthorOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAuthorOrReadOnly,)
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ('group',)
 
@@ -28,7 +29,8 @@ class PostViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthorOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAuthorOrReadOnly,)
 
     def get_queryset(self):
         post_id = self.kwargs['post_id']
